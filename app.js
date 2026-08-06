@@ -175,7 +175,9 @@ const AsoSimulasyon = {
         let alan = parseFloat(document.getElementById('global-alan')?.value || 2.0);
 
         let analizKutusu = document.getElementById('substrat-analiz-kutusu');
-        document.getElementById('val-boraks').innerText = boraks + " g/L";
+        if (document.getElementById('val-boraks')) {
+            document.getElementById('val-boraks').innerText = boraks + " g/L";
+        }
 
         let termalIletkenlikCarpani = 1 + ((sicaklik - 25) * 0.015);
         let iletkenlik = (1 - (boraks * 0.015)) * termalIletkenlikCarpani;
@@ -192,24 +194,40 @@ const AsoSimulasyon = {
 
         if (rejim === 'galvanostatik') {
             let akimYogunlugu = parseFloat(document.getElementById('slider-akim').value);
-            document.getElementById('val-akim').innerText = akimYogunlugu + " A/dm²";
+            if (document.getElementById('val-akim')) document.getElementById('val-akim').innerText = akimYogunlugu + " A/dm²";
             let toplamAkim = akimYogunlugu * alan;
 
             if (analizKutusu) {
                 if (elektrolit === 'asidik') {
                     analizKutusu.style.borderLeft = "4px solid #d2a8ff";
-                    analizKutusu.innerHTML = `<div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;"><b style="color: #d2a8ff; font-size:1.1em;">🧪 Seyreltik Sülfürik Asit (H₂SO₄) – ASO Rejimi</b></div><div>Seyreltik asidik ortamda yüksek iletkenlik sayesinde anodik kıvılcımlanma <b>200-250V</b> gibi düşük potansiyellerde gerçekleşir. Deşarjlar termal olarak daha yumuşaktır (soft-sparking).</div>`;
+                    analizKutusu.innerHTML = `
+                    <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;">
+                        <b style="color: #d2a8ff; font-size:1.1em;">🧪 Seyreltik Sülfürik Asit (H₂SO₄) – ASO Rejimi</b>
+                    </div>
+                    <div style="font-size:0.9em; line-height:1.5;">
+                        <b>1. Faraday Evresi:</b> Çıplak metal yüzeyinde ince amorf yalıtkan bariyer oluşur, voltaj hızla fırlar.<br>
+                        <b>2. Dielektrik Kırılma:</b> Film dayanım sınırını aşar, mikroskobik delinmelerle ilk "yumuşak kıvılcımlar" (soft-sparking) başlar ve voltaj artış eğimi kırılır.<br>
+                        <b>3. ASO Platosu (Kararlı Hal):</b> Asidik ortamın yüksek iletkenliği sayesinde <b>200-250V</b> gibi güvenli bir platoda çalışılır. Yıkıcı PEO arklarına geçiş engellenir.
+                    </div>`;
                 } else {
                     analizKutusu.style.borderLeft = "4px solid var(--spark-orange)";
-                    analizKutusu.innerHTML = `<div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;"><span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:${sVeri.renk};"></span><b style="color: ${sVeri.renk}; font-size:1.1em;">${sVeri.isim} Galvanostatik Büyüme (U-t)</b></div><div>Güç Kaynağından Çekilen Toplam Akım: <b style="color:var(--spark-orange);">${toplamAkim.toFixed(1)} Amper</b> (${alan} dm²). <b>${sVeri.analiz}</b></div>`;
+                    analizKutusu.innerHTML = `
+                    <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;">
+                        <span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:${sVeri.renk};"></span>
+                        <b style="color: ${sVeri.renk}; font-size:1.1em;">${sVeri.isim} Galvanostatik Büyüme (U-t)</b>
+                    </div>
+                    <div style="font-size:0.9em; line-height:1.5;">
+                        Güç Kaynağından Çekilen Akım: <b style="color:var(--spark-orange);">${toplamAkim.toFixed(1)} Amper</b> (${alan} dm²). <b>${sVeri.analiz}</b><br><br>
+                        <b>Büyüme Fiziği:</b> Faraday evresiyle tırmanan voltaj, dielektrik kırılma noktasına ulaşır ve ardından kalınlaşan tabaka ile dengeye oturarak kararlı <b>ASO Platosunu</b> oluşturur.
+                    </div>`;
                 }
             }
 
             let anlikKirilma = Math.max(15, ((sVeri.kirilma + elektrolitVoltFarki) / iletkenlik) - (akimYogunlugu * 1.2));
             let anlikPlato = Math.max(25, ((sVeri.plato + elektrolitVoltFarki) / iletkenlik) + (akimYogunlugu * 1.5));
 
-            document.getElementById('hesap-kirilma').innerText = Math.round(anlikKirilma) + " V";
-            document.getElementById('hesap-plato').innerText = Math.round(anlikPlato) + " V";
+            if (document.getElementById('hesap-kirilma')) document.getElementById('hesap-kirilma').innerText = Math.round(anlikKirilma) + " V";
+            if (document.getElementById('hesap-plato')) document.getElementById('hesap-plato').innerText = Math.round(anlikPlato) + " V";
 
             let faradayHizi = akimYogunlugu * 8 * (25 / sicaklik);
             for (let saniye = 0; saniye <= 600; saniye += 10) {
@@ -231,28 +249,54 @@ const AsoSimulasyon = {
                 this.aktifGrafikUT.data.datasets[0].backgroundColor = (elektrolit === 'asidik') ? 'rgba(210, 168, 255, 0.1)' : ((seciliSubstrat.startsWith("Al") && boraks > 0) ? 'rgba(88, 166, 255, 0.1)' : 'rgba(201, 209, 217, 0.05)');
             }
         } else {
+            // POTANSİYOSTATİK REJİM (SABİT VOLTAJ - I-t Eğrisi)
             let hedefVoltaj = parseFloat(document.getElementById('slider-voltaj').value);
-            document.getElementById('val-voltaj').innerText = hedefVoltaj + " V";
+            if (document.getElementById('val-voltaj')) document.getElementById('val-voltaj').innerText = hedefVoltaj + " V";
 
             if (analizKutusu) {
                 analizKutusu.style.borderLeft = "4px solid #d2a8ff";
-                analizKutusu.innerHTML = `<div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;"><span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:#d2a8ff;"></span><b style="color: #d2a8ff; font-size:1.1em;">${sVeri.isim} Potansiyostatik Sönümlenme (I-t)</b></div><div>Sabit voltaj uygulandığında, başlangıçta devasa bir 'surge' (tepe) akımı çekilir. Dielektrik bariyer oluştukça akım yoğunluğu hiperbolik ve eksponansiyel bir düşüş sergiler.</div>`;
+                analizKutusu.innerHTML = `
+                <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 8px;">
+                    <span style="display:inline-block; width:15px; height:15px; border-radius:50%; background-color:#d2a8ff;"></span>
+                    <b style="color: #d2a8ff; font-size:1.1em;">${sVeri.isim} Potansiyostatik Büyüme Fiziği (I-t)</b>
+                </div>
+                <div style="font-size:0.9em; line-height:1.5;">
+                    <b>1. Ani Tepe (Surge) ve Capping:</b> Direnç sıfıra yakınken çekilen devasa akım, güç kaynağının donanımsal korumasıyla (capping) sınırlandırılır.<br>
+                    <b>2. Pasifleşme:</b> Saniyeler içinde amorf bariyerin inşasıyla direnç fırlar, akım dibe çakılır.<br>
+                    <b>3. Dielektrik Kırılma:</b> Film delinip mikro-arklar başladığında iletkenlik anlık artar; grafikte çan eğrisi şeklinde ikincil bir yükseliş yaşanır.<br>
+                    <b>4. Rezidüel Plato:</b> Oksit kalınlaştıkça arklar boğulur ve akım çok düşük, sızıntı boyutunda kalıcı bir platoya iner.
+                </div>`;
             }
 
-            let baslangicAkimi = (hedefVoltaj * 0.08) * (1 / (Math.max(10, (sVeri.kirilma + elektrolitVoltFarki)) / 400)) * termalIletkenlikCarpani;
-            let reziduelAkim = (hedefVoltaj / Math.max(10, (sVeri.plato + elektrolitVoltFarki))) * 2 * (boraks > 0 ? 1.5 : 1);
+            // Güç kaynağı donanım limiti (Current Limiting - Maksimum 48 A/dm²)
+            let anlikHesaplananBaslangic = (hedefVoltaj * 0.12) * (400 / Math.max(50, (sVeri.kirilma + elektrolitVoltFarki))) * termalIletkenlikCarpani;
+            let baslangicAkimi = Math.min(48, Math.max(5, anlikHesaplananBaslangic));
 
-            document.getElementById('hesap-kirilma').innerText = baslangicAkimi.toFixed(1) + " A/dm²";
-            document.getElementById('hesap-plato').innerText = reziduelAkim.toFixed(2) + " A/dm²";
+            let reziduelAkim = (hedefVoltaj / Math.max(50, (sVeri.plato + elektrolitVoltFarki))) * 2 * (boraks > 0 ? 1.5 : 1);
+            reziduelAkim = Math.min(35, Math.max(0.5, reziduelAkim));
+
+            if (document.getElementById('hesap-kirilma')) document.getElementById('hesap-kirilma').innerText = baslangicAkimi.toFixed(1) + " A/dm² (Tepe/Surge)";
+            if (document.getElementById('hesap-plato')) document.getElementById('hesap-plato').innerText = reziduelAkim.toFixed(2) + " A/dm² (Kalıcı Plato)";
 
             for (let saniye = 0; saniye <= 600; saniye += 10) {
                 zEkseni.push(saniye);
                 if (saniye === 0) {
                     vEkseni.push(baslangicAkimi);
                 } else {
-                    let sönümlenme = baslangicAkimi * Math.exp(-saniye / (40 * (25 / sicaklik)));
-                    let noise = (Math.random() - 0.5) * 0.2;
-                    vEkseni.push(Math.max(reziduelAkim + noise, sönümlenme + reziduelAkim));
+                    let akim = 0;
+                    if (saniye <= 60) {
+                        akim = baslangicAkimi * Math.exp(-saniye / 12);
+                    } else if (saniye > 60 && saniye <= 200) {
+                        let artis = (saniye - 60) / 140;
+                        let dipAkimi = baslangicAkimi * Math.exp(-60 / 12);
+                        akim = dipAkimi + (baslangicAkimi * 0.25) * Math.sin(artis * Math.PI);
+                    } else {
+                        let sonTepe = (baslangicAkimi * Math.exp(-60 / 12)) + (baslangicAkimi * 0.25);
+                        let inis = sonTepe * Math.exp(-(saniye - 200) / 80);
+                        akim = Math.max(reziduelAkim, inis + reziduelAkim);
+                    }
+                    let noise = (Math.random() - 0.5) * 0.3;
+                    vEkseni.push(Math.max(0, akim + noise));
                 }
             }
 
